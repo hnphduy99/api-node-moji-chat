@@ -1,18 +1,29 @@
-import dotenv from 'dotenv';
+import cookieParser from 'cookie-parser';
 import express from 'express';
+import { setServers } from 'node:dns/promises';
+import { connectToDatabase } from './libs/db.js';
+import authRoute from './routes/authRoute.js';
+import { PORT } from './utils/env.js';
 
-dotenv.config();
+setServers(['1.1.1.1', '8.8.8.8']);
 
 const app = express();
-const port = process.env.PORT || 8000;
+const port = PORT;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
+app.use(cookieParser());
+//public routes
+app.use('/api/auth', authRoute);
 
-app.get('/', (req, res) => {
-  res.send('Hello, World!');
-});
+//private routes
 
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
-});
+connectToDatabase()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Server is running on port ${port}`);
+    });
+  })
+  .catch((error) => {
+    console.error('Failed to connect to the database:', error);
+  });
