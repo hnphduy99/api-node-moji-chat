@@ -1,11 +1,12 @@
 import cookieParser from 'cookie-parser';
+import cors from 'cors';
 import express from 'express';
 import { setServers } from 'node:dns/promises';
 import { connectToDatabase } from './libs/db.js';
 import { protectedRoute } from './middlewares/authMiddleware.js';
 import authRoute from './routes/authRoute.js';
 import userRoute from './routes/userRoute.js';
-import { PORT } from './utils/env.js';
+import { CLIENT_URL, PORT } from './utils/env.js';
 
 setServers(['1.1.1.1', '8.8.8.8']);
 
@@ -15,6 +16,7 @@ const port = PORT;
 // Middleware to parse JSON bodies
 app.use(express.json());
 app.use(cookieParser());
+app.use(cors({ origin: CLIENT_URL, credentials: true }));
 //public routes
 app.use('/api/auth', authRoute);
 
