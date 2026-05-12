@@ -5,10 +5,11 @@ import { setServers } from 'node:dns/promises';
 import { connectToDatabase } from './libs/db.js';
 import { protectedRoute } from './middlewares/authMiddleware.js';
 import authRoute from './routes/authRoute.js';
+import friendRoute from './routes/friendRoute.js';
 import userRoute from './routes/userRoute.js';
 import { CLIENT_URL, PORT } from './utils/env.js';
 
-setServers(['1.1.1.1', '8.8.8.8']);
+setServers(['1.1.1.1', '8.8.8.8']); //truy cap mongodb
 
 const app = express();
 const port = PORT;
@@ -23,6 +24,7 @@ app.use('/api/auth', authRoute);
 //private routes
 app.use(protectedRoute);
 app.use('/api/users', userRoute);
+app.use('/api/friends', friendRoute);
 
 connectToDatabase()
   .then(() => {

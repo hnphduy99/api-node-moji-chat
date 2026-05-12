@@ -30,7 +30,7 @@ export const signUp = async (req: Request, res: Response) => {
     await User.create({ username, hashPassword, email, displayName: `${firstName} ${lastName}` });
 
     //return
-    return res.status(204);
+    return res.sendStatus(204);
   } catch (error) {
     console.log('Lỗi khi gọi signUp', error);
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
@@ -99,7 +99,7 @@ export const signOut = async (req: Request, res: Response) => {
       //xoá cookie
       res.clearCookie('refreshToken');
     }
-    return res.status(204);
+    return res.sendStatus(204);
   } catch (error) {
     console.log('Lỗi khi gọi signOut', error);
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
