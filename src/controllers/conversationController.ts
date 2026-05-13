@@ -92,12 +92,16 @@ export const getConversations = async (req: Request, res: Response) => {
       });
 
     const formatted = conversations.map((i) => {
-      const participants = (i.participants || []).map((p) => ({
-        _id: p.userId?.id,
-        displayName: (p.userId as unknown as PopulatedUser)?.displayName,
-        avatarUrl: (p.userId as unknown as PopulatedUser)?.avatarUrl ?? null,
-        joinAt: p.joinedAt
-      }));
+      const participants = (i.participants || []).map((p) => {
+        const user = p.userId as unknown as PopulatedUser;
+
+        return {
+          _id: user.id,
+          displayName: user.displayName,
+          avatarUrl: user.avatarUrl ?? null,
+          joinAt: p.joinedAt
+        };
+      });
 
       return {
         ...i.toObject(),
