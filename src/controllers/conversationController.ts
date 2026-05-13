@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import Conversation from '~/models/Conversation.js';
+import Message from '~/models/Message.js';
 
 type PopulatedUser = {
   id?: string;
@@ -116,4 +117,33 @@ export const getConversations = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
-export const getMessages = async (req: Request, res: Response) => {};
+export const getMessages = async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const { limit = 50, cursor } = req.query;
+
+    const query: Record<string, unknown> = { conversationId };
+    if (cursor) {
+      query.createdAt = { $lt: new Date(cursor as string) };
+    }
+
+    let messages = await Message.find(query)
+      .sort({ createdAt: -1 })
+      .limit(Number(limit) + 1);
+
+    let nextCursor = null;
+
+    if (messages.length > Number(limit)) {
+      const nextMessage = messages[messages.length - 1];
+      nextCursor = nextMessage.createdAt.toISOString();
+      messages.pop();
+    }
+
+    messages = messages.reverse();
+
+    return res.status(200).json({ messages, nextCursor });
+  } catch (error) {
+    console.log('Lỗi xảy ra khi lấy messages', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};

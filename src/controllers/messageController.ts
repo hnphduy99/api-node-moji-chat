@@ -55,4 +55,29 @@ export const sendDirectMessage = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
-export const sendGroupMessage = async (req: Request, res: Response) => {};
+export const sendGroupMessage = async (req: Request, res: Response) => {
+  try {
+    const { conversationId, content } = req.body;
+    const senderId = req.user._id;
+    const conversation = (req as any).conversation;
+
+    if (!content) {
+      return res.status(400).json({ message: 'Thiếu nội dung tin nhắn' });
+    }
+
+    const message = await Message.create({
+      conversationId,
+      senderId,
+      content
+    });
+
+    updateConversationAfterCreateMessage(conversation, message, senderId);
+
+    await conversation.update();
+
+    return res.status(201).json({ message });
+  } catch (error) {
+    console.log('Lỗi xảy ra khi gửi tin nhắn nhóm', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};
