@@ -147,3 +147,18 @@ export const getMessages = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
+
+export const getUserConversationsForSocketIO = async (userId: string) => {
+  try {
+    const conversation = await Conversation.find(
+      {
+        'participants.userId': userId
+      },
+      { _id: 1 }
+    );
+    return conversation.map((c) => c._id.toString());
+  } catch (error) {
+    console.error('Lỗi khi fetch conversations: ', error);
+    return [];
+  }
+};

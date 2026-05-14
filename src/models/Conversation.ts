@@ -36,7 +36,8 @@ const groupSchema = new mongoose.Schema(
 
 const lastMessageSchema = new mongoose.Schema(
   {
-    _id: {
+    _id: { type: String },
+    content: {
       type: String,
       default: null
     },

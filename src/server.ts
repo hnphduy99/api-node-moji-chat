@@ -9,11 +9,11 @@ import conversationRoute from './routes/conversationRoute.js';
 import friendRoute from './routes/friendRoute.js';
 import messageRoute from './routes/messageRoute.js';
 import userRoute from './routes/userRoute.js';
+import { app, server } from './socket/index.js';
 import { CLIENT_URL, PORT } from './utils/env.js';
 
 setServers(['1.1.1.1', '8.8.8.8']); //truy cap mongodb
 
-const app = express();
 const port = PORT;
 
 // Middleware to parse JSON bodies
@@ -32,7 +32,7 @@ app.use('/api/conversations', conversationRoute);
 
 connectToDatabase()
   .then(() => {
-    app.listen(port, () => {
+    server.listen(port, () => {
       console.log(`Server is running on port ${port}`);
     });
   })

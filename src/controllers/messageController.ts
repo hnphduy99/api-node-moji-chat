@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import Conversation from '~/models/Conversation.js';
 import Message from '~/models/Message.js';
-import { updateConversationAfterCreateMessage } from '~/utils/messageHelper.js';
+import { io } from '~/socket/index.js';
+import { emitMessage, updateConversationAfterCreateMessage } from '~/utils/messageHelper.js';
 
 export const sendDirectMessage = async (req: Request, res: Response) => {
   try {
@@ -49,6 +50,8 @@ export const sendDirectMessage = async (req: Request, res: Response) => {
 
     await conversation.save();
 
+    emitMessage(io, conversation, message);
+
     return res.status(201).json({ message });
   } catch (error) {
     console.log('Lỗi xảy ra khi gửi tin nhắn trực tiếp', error);
@@ -73,7 +76,9 @@ export const sendGroupMessage = async (req: Request, res: Response) => {
 
     updateConversationAfterCreateMessage(conversation, message, senderId);
 
-    await conversation.update();
+    await conversation.save();
+
+    emitMessage(io, conversation, message);
 
     return res.status(201).json({ message });
   } catch (error) {
