@@ -87,6 +87,12 @@ export const createConversation = async (req: Request, res: Response) => {
       participants
     };
 
+    if (type === 'group') {
+      memberIds.forEach((userId) => {
+        io.to(userId).emit('new-group', formatted);
+      });
+    }
+
     return res.status(201).json({ conversation: formatted });
   } catch (error) {
     console.log('Lỗi khi tạo cuộc trò chuyện', error);
