@@ -1,3 +1,4 @@
+import { v2 as cloudinary } from 'cloudinary';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
@@ -10,7 +11,7 @@ import friendRoute from './routes/friendRoute.js';
 import messageRoute from './routes/messageRoute.js';
 import userRoute from './routes/userRoute.js';
 import { app, server } from './socket/index.js';
-import { CLIENT_URL, PORT } from './utils/env.js';
+import { CLIENT_URL, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET, CLOUDINARY_CLOUD_NAME, PORT } from './utils/env.js';
 
 setServers(['1.1.1.1', '8.8.8.8']); //truy cap mongodb
 
@@ -20,6 +21,13 @@ const port = PORT;
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ origin: CLIENT_URL, credentials: true }));
+
+cloudinary.config({
+  cloud_name: CLOUDINARY_CLOUD_NAME,
+  api_key: CLOUDINARY_API_KEY,
+  api_secret: CLOUDINARY_API_SECRET
+});
+
 //public routes
 app.use('/api/auth', authRoute);
 
