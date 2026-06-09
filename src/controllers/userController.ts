@@ -58,3 +58,21 @@ export const uploadAvatar = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
+
+export const updateProfile = async (req: Request, res: Response) => {
+  try {
+    const { displayName } = req.body;
+    if (!displayName) {
+      return res.status(400).json({ message: 'Vui lòng nhập displayName' });
+    }
+    const user = await User.findOneAndUpdate(
+      { _id: req.user._id },
+      { displayName },
+      { returnDocument: 'after' }
+    ).select('displayName bio email');
+    return res.status(200).json({ user });
+  } catch (error) {
+    console.log('Lỗi khi gọi updateProfile', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};

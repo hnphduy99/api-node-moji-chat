@@ -106,7 +106,6 @@ export const signOut = async (req: Request, res: Response) => {
   }
 };
 
-//tạo accessToken mới từ refreshToken
 export const refreshToken = async (req: Request, res: Response) => {
   try {
     // lấy refreshToken từ cookie
@@ -130,6 +129,99 @@ export const refreshToken = async (req: Request, res: Response) => {
     return res.status(200).json({ accessToken });
   } catch (error) {
     console.log('Lỗi khi gọi refreshToken', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Vui lòng nhập mật khẩu cũ và mật khẩu mới' });
+    }
+
+    const user = await User.findOne({ _id: req.user._id });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy user' });
+    }
+
+    const passwordCorrect = await bcrypt.compare(currentPassword, user.hashPassword);
+    if (!passwordCorrect) {
+      return res.status(401).json({ message: 'Mật khẩu cũ không chính xác' });
+    }
+
+    const hashNewPassword = await bcrypt.hash(newPassword, 10);
+    await User.updateOne({ _id: req.user._id }, { hashPassword: hashNewPassword });
+
+    return res.status(200).json({ message: 'Mật khẩu đã được thay đổi thành công' });
+  } catch (error) {
+    console.log('Lỗi khi gọi changePassword', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: 'Vui lòng nhập email' });
+    }
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'Không tìm thấy user với email này' });
+    }
+
+    // Tạo token ски
+    const resetToken = crypto.randomBytes(64).toString('hex');
+
+    // Lưu token vào session tạm thời
+    await Session.create({
+      userId: user._id,
+      refreshToken: resetToken,
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000) // 15 phút
+    });
+
+    // Gửi email chứa link reset (trong thực tế cần tích hợp SMTP hoặc dịch vụ email)
+    console.log(`Gửi reset link tới email: ${email}. Token: ${resetToken}`);
+
+    return res.status(200).json({ message: 'Link reset đã được gửi tới email của bạn' });
+  } catch (error) {
+    console.log('Lỗi khi gọi forgotPassword', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ message: 'Token và mật khẩu mới là bắt buộc' });
+    }
+
+    // Tìm session dựa trên token (đã lưu ở bước forgotPassword)
+    const session = await Session.findOne({ refreshToken: token });
+    if (!session) {
+      return res.status(404).json({ message: 'Token không tồn tại hoặc đã hết hạn' });
+    }
+
+    // Kiểm tra token có hết hạn không
+    if (session.expiresAt < new Date()) {
+      return res.status(403).json({ message: 'Token đã hết hạn. Vui lòng yêu cầu lại forgot password' });
+    }
+
+    // Mã hóa mật khẩu mới
+    const hashPassword = await bcrypt.hash(newPassword, 10);
+
+    // Cập nhật mật khẩu cho user
+    await User.updateOne({ _id: session.userId }, { hashPassword });
+
+    // Xóa session/token này đi sau khi đã sử dụng
+    await Session.deleteOne({ _id: session._id });
+
+    return res.status(200).json({ message: 'Mật khẩu đã được đặt lại thành công' });
+  } catch (error) {
+    console.log('Lỗi khi gọi resetPassword', error);
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
