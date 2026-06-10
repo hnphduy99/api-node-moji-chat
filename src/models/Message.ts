@@ -13,6 +13,11 @@ const messageSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
+    type: {
+      type: String,
+      enum: ['image', 'text'],
+      default: 'text'
+    },
     content: {
       type: String,
       trim: true

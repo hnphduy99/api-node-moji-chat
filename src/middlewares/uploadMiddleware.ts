@@ -1,14 +1,14 @@
-import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import { UploadApiOptions, UploadApiResponse, v2 as cloudinary } from 'cloudinary';
 import multer from 'multer';
 
 export const upload = multer({
   storage: multer.memoryStorage(),
   limits: {
-    fileSize: 2 * 1024 * 1024 // 2MB
+    fileSize: 5 * 1024 * 1024 // 5MB
   }
 });
 
-export const uploadImageFromBuffer = (buffer: Buffer, options?: any): Promise<UploadApiResponse> => {
+export const uploadImageFromBuffer = (buffer: Buffer, options?: UploadApiOptions): Promise<UploadApiResponse> => {
   return new Promise<UploadApiResponse>((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
