@@ -244,3 +244,42 @@ export const markAsSeen = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
+
+export const deleteConversation = async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id.toString();
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(400).json({ message: 'Conversation không tồn tại' });
+    }
+
+    // Check user is member of conversation
+    const isMember = conversation.participants.some((p) => p.userId.toString() === userId);
+    if (!isMember) {
+      return res.status(400).json({ message: 'Bạn không phải là thành viên của cuộc trò chuyện' });
+    }
+
+    // Delete all messages in this conversation
+    await Message.deleteMany({ conversationId: conversation._id });
+
+    // Delete conversation
+    await conversation.deleteOne();
+
+    // Emit event to all members
+    conversation.participants.forEach((p) => {
+      const participantUserId = p.userId.toString();
+      io.to(participantUserId).emit('conversation-deleted', {
+        conversationId: conversation._id.toString(),
+        userId
+      });
+    });
+
+    return res.status(200).json({ message: 'Xóa cuộc trò chuyện thành công' });
+  } catch (error) {
+    console.error('Lỗi khi gọi deleteConversation: ', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};
