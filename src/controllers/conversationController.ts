@@ -283,3 +283,45 @@ export const deleteConversation = async (req: Request, res: Response) => {
     return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
   }
 };
+
+export const dissolveGroupChat = async (req: Request, res: Response) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id.toString();
+
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ message: 'Cuộc trò chuyện không tồn tại' });
+    }
+
+    if (conversation.type !== 'group') {
+      return res.status(400).json({ message: 'Chỉ có thể giải tán nhóm chat' });
+    }
+
+    const isLeader = conversation.group?.createdBy?.toString() === userId;
+    if (!isLeader) {
+      return res.status(403).json({ message: 'Chỉ trưởng nhóm mới có quyền giải tán nhóm' });
+    }
+
+    // Delete all messages in this conversation
+    await Message.deleteMany({ conversationId: conversation._id });
+
+    // Delete conversation
+    await conversation.deleteOne();
+
+    // Emit event to all members
+    conversation.participants.forEach((p) => {
+      const participantUserId = p.userId.toString();
+      io.to(participantUserId).emit('conversation-deleted', {
+        conversationId: conversation._id.toString(),
+        userId
+      });
+    });
+
+    return res.status(200).json({ message: 'Giải tán nhóm thành công' });
+  } catch (error) {
+    console.error('Lỗi khi gọi dissolveGroupChat: ', error);
+    return res.status(500).json({ message: 'Lỗi hệ thống, vui lòng thử lại sau' });
+  }
+};
